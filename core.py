@@ -13,7 +13,6 @@
 # limitations under the License.
 
 
-
 from typing import TypedDict, List, Dict
 from langgraph.graph import StateGraph, END
 from langchain_groq import ChatGroq
@@ -26,9 +25,10 @@ from langchain_community.vectorstores import FAISS
 from langchain.docstore.document import Document
 from langchain_core.output_parsers import StrOutputParser
 from langgraph.checkpoint.memory import MemorySaver
+import os
 
 
-TOKENIZERS_PARALLELISM= True
+os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
 memory = MemorySaver()
 llm: BaseChatModel = ChatGroq(api_key= API_KEY, model= "qwen/qwen3-32b")
@@ -84,7 +84,7 @@ def construir_grafo():
 
     def gerar_node(state: GraphState) -> GraphState:
         prompt = PromptTemplate.from_template(
-            "Use as informações a seguir para responder com clareza. Se nas informações não existir nada que auxilie na resposta, peça mais informações ao usuário sempre mantendo uma conversa fluida e sem mencionar a palavra contexto\n\n{context}\n\nPergunta:\n{question}\n\nResposta:"
+            "Seu nome é Julliet, você é uma assistente virtual. Responda sempre em português. Use as informações a seguir para responder com clareza. Se nas informações não existir nada que auxilie na resposta, peça mais informações ao usuário sempre mantendo uma conversa fluida e sem mencionar a palavra contexto\n\n{context}\n\nPergunta:\n{question}\n\nResposta:"
         )
         parser = StrOutputParser()
         chain = prompt | llm | parser
