@@ -118,30 +118,7 @@ st.markdown("<p style='padding-top:10px'> </p>", unsafe_allow_html=True)
 with st.expander("CLIQUE AQUI PARA TRABALHAR COM ARQUIVOS LOCAIS"):
     file = []
     if 'temp_file_path' not in st.session_state:
-        st.session_state.temp_file_path = None
-
-    upload_file = st.file_uploader("Escolha um arquivo para enviar para a Juliett", type=["pdf"])
-
-    if upload_file is not None:
-        save_directory = f".venv/data/pdf_temp"
-        name_file = 'temp.pdf'
-        caminho_arquivo = os.path.join(save_directory, name_file)
-        if os.path.exists(caminho_arquivo):
-            os.remove(caminho_arquivo)
-            os.makedirs(save_directory, exist_ok=True)
-            file_path = os.path.join(save_directory, name_file)
-            st.session_state.temp_file_path = file_path
-            with open(file_path, "wb") as f:
-                f.write(upload_file.getbuffer())
-        else:
-            os.makedirs(save_directory, exist_ok=True)
-            file_path = os.path.join(save_directory, name_file)
-            st.session_state.temp_file_path = file_path
-            with open(file_path, "wb") as f:
-                f.write(upload_file.getbuffer())
-        #falta criar a função para deletar o arquivo criado
-
-   
+        st.session_state.temp_file_path = None  
 
     upload_rag = st.file_uploader("Escolha um arquivo para adicionar a base de dados da Juliett", type=["pdf"])
     
@@ -176,5 +153,26 @@ if 'session_id' not in st.session_state:
    table = 'sessions'
    st.session_state['session_id'] = str(get_next_session_id(table))
 
-
+st.markdown(
+        """
+        <style>
+        .footer {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            background-color: #f8f9fa;
+            color: #6c757d;
+            text-align: center;
+            padding: 10px;
+            font-size: 0.8em;
+            border-top: 1px solid #dee2e6;
+        }
+        </style>
+        <div class="footer">
+            Desenvolvido por Guilherme Felipe Breetz Rodovalho - AI-generated, for reference only
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
