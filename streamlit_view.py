@@ -8,7 +8,6 @@ import time
 import re
 from session_id import get_next_session_id
 
-
 def get_base64_image(image_path):
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
