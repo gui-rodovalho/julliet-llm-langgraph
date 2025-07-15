@@ -15,7 +15,7 @@ def get_base64_image(image_path):
 st.set_page_config(page_title="JULIETT - Assistente Virtual da Polícia Judicial",  layout= "wide")
 
 
-image_path = 'assets/images/logo.jpeg'
+image_path = 'assets/images/foto.png'
 image_base64 = get_base64_image(image_path)
 html_content = f"""
 <div style="display: flex; align-items: center; justify-content: center;">
@@ -46,8 +46,10 @@ def split(response):
     # Remove bloco <think>...</think>
     texto_limpo = re.sub(r"<think>.*?</think>", "", texto, flags=re.DOTALL).strip()
 
+    texto_sem_base = re.sub(r"\[BASE DE CONHECIMENTO\].*", "", texto_limpo, flags=re.DOTALL).strip()
+
     # Converte \n\n e \n para quebras de linha reais
-    texto_formatado = texto_limpo.replace("\\n", "\n").replace("\n\n", "\n\n")
+    texto_formatado = texto_sem_base.replace("\\n", "\n").replace("\n\n", "\n\n")
 
     
 #Entrega as respostas caractere por caractere   
