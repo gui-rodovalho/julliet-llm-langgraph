@@ -28,7 +28,7 @@ from langgraph.checkpoint.memory import MemorySaver
 import os
 
 
-os.environ["TOKENIZERS_PARALLELISM"] = "true"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 memory = MemorySaver()
 llm: BaseChatModel = ChatGroq(api_key= API_KEY, model= "qwen/qwen3-32b")
