@@ -3,3 +3,8 @@ config.py
 venv/
 __pycache__/
 *.pyc
+*.db
+.vscode/
+*.log
+*.faiss
+*.pkl
