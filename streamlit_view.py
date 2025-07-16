@@ -1,6 +1,6 @@
 import streamlit as st
 from save_vector_store import add_to_faiss
-from core import responder
+from core_agents import responder
 import base64
 import html
 import os
@@ -11,9 +11,11 @@ from session_id import get_next_session_id
 def get_base64_image(image_path):
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
+#configurações do layout da aba do navegador
     
 st.set_page_config(page_title="JULIETT - Assistente Virtual da Polícia Judicial",  layout= "wide")
 
+# configurações de layout do Cabeçalho e logotipo  
 
 image_path = 'assets/images/foto.png'
 image_base64 = get_base64_image(image_path)
@@ -32,8 +34,6 @@ if len(st.session_state) == 0:
         st.session_state["messages"] = []
 
 st.markdown(html_content, unsafe_allow_html=True)
-
-
 
 
 
@@ -68,6 +68,9 @@ def split(response):
 
 
 
+
+# Campo de entrada para a pergunta do usuário
+
 # Interface do Streamlit
 
 # Campo de entrada para a pergunta do usuário
@@ -82,28 +85,25 @@ input = st.text_area(label="Faça uma pergunta:")
 # Botão para enviar a pergunta
 if "generated_response" not in st.session_state:
     st.session_state.generated_response = None
+
+if "mensagens" not in st.session_state:
+    st.session_state["mensagens"] = []
 if st.button("Enviar"):
     
     if input:
         query = html.escape(input)
-        response = responder(query, st.session_state["session_id"])
+        response = responder(query, st.session_state["session_id"], mensagens= st.session_state["messages"])
         
         st.session_state.user_input =""
-        st.session_state["messages"].append((query, True))
-        st.session_state["messages"].append((response, False))
-     # Obter resposta       
-        
-        #st.write("Resposta:")
+        st.session_state["mensagens"].append({"role": "user", "content": input})
+        st.session_state["mensagens"].append({"role": "assistant", "content": response}) 
+      
         resposta = response
         st.session_state.generated_response = response
-        #mp3_fp = asyncio.run(texto_para_audio(resposta))
-        
-       # with resposta_placeholder.container(height=300, border= True):
+  
         if st.session_state.generated_response:
             st.write("Resposta: ")
             st.write_stream(split(st.session_state.generated_response))
-        
-       
 
     else:
             st.warning("Por favor, insira uma pergunta.")
@@ -154,6 +154,8 @@ if 'session_id' not in st.session_state:
    # next_session_id = get_next_session_id
    table = 'sessions'
    st.session_state['session_id'] = str(get_next_session_id(table))
+
+# configurações de layout - rodapé
 
 st.markdown(
         """

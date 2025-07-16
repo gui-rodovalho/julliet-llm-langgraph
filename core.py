@@ -25,6 +25,7 @@ from langchain_community.vectorstores import FAISS
 from langchain.docstore.document import Document
 from langchain_core.output_parsers import StrOutputParser
 from langgraph.checkpoint.memory import MemorySaver
+from mcp_rag import get_mcp_context
 import os
 
 
@@ -35,11 +36,13 @@ llm: BaseChatModel = ChatGroq(api_key= API_KEY, model= "qwen/qwen3-32b")
 embedder = HuggingFaceEmbeddings(model_name="paraphrase-multilingual-mpnet-base-v2")
 
 def get_context(query: str) -> str:
-
-    index = "faiss_index"
+    #mcp_documents = get_mcp_context(query=query)
+    mcp_documents = ""
+    
+    index = "faiss_index"   
     documents = get_relevant_documents(input=query, path=index)
 
-    print(f"\n\n os documentos são \n\n {documents}")
+    print(f"\n\n os documentos são \n\n {documents} \n\n{mcp_documents}")
     return documents
 
 # Extrai mensagens anteriores como texto

@@ -5,10 +5,10 @@ from langchain_community.document_loaders import PyPDFLoader
 import traceback
 import os      
 
-VECTOR_INDEX_PATH = "rag_index"    
+   
 def add_to_faiss(save_dir, save_path):
     print("chegou no add to faiss")
-
+    index_path = "rag_index" 
 
     # trasforma os documentos enviados para o rag em um indice de vetores
 
@@ -25,14 +25,14 @@ def add_to_faiss(save_dir, save_path):
                 faiss_index = vectors.index
                 print(f"Total de vetores no índice: {faiss_index.ntotal}")
                 
-                if not os.path.exists(VECTOR_INDEX_PATH):
-                    vectors.save_local(VECTOR_INDEX_PATH)
+                if not os.path.exists(index_path):
+                    vectors.save_local(index_path)
 
                     # index_name deve ser sempre = index
                     
                     print('\n NÃO ENCONTROU FAISS.INDEX\n')
                 else:
-                    faiss_store = FAISS.load_local(VECTOR_INDEX_PATH,embeddings= embeddings, allow_dangerous_deserialization=True)
+                    faiss_store = FAISS.load_local(index_path,embeddings= embeddings, allow_dangerous_deserialization=True)
                     faiss_store.merge_from(vectors)
                     index = faiss_store.index
                     print(f"Total de vetores no merge: {index.ntotal}")
