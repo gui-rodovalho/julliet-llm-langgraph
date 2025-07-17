@@ -11,14 +11,21 @@ from langchain_core.output_parsers import StrOutputParser
 from langgraph.checkpoint.memory import MemorySaver
 import os
 from config import API_KEY
+from config import OPENAI_KEY
 from get_rag_context import get_relevant_documents
+from langchain_openai import ChatOpenAI
+
 
 # === Configurações iniciais ===
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 memory = MemorySaver()
 
+image_llm = ChatOpenAI(
+    model = "gpt-4o",
+    api_key = OPENAI_KEY
+)
 llm = ChatGroq(api_key=API_KEY, model="qwen/qwen3-32b")
-llm1 = ChatGroq(api_key=API_KEY, model="llama-3.3-70b-versatile")
+llm1 = ChatGroq(api_key=API_KEY, model="llama-3.3-70b-versatile", temperature= 0.1)
 llm2 = ChatGroq(api_key=API_KEY, model="deepseek-r1-distill-llama-70b")
 embedder = HuggingFaceEmbeddings(model_name="paraphrase-multilingual-mpnet-base-v2")
 
@@ -43,21 +50,24 @@ def filtrar_memoria_relevante(pergunta: str, messages: List[Dict[str, str]], k: 
     return "\n".join([doc.page_content for doc in docs_relevantes])
 
 def get_context(query: str) -> str:
-    index = "faiss_index"
+    index = "rag_index"
     documents = get_relevant_documents(input=query, path=index)
     return documents
 
 # === Estado ===
 class PlanejamentoState(TypedDict):
     cenario: str
+    analise_local: str
     analise_risco: str
     medidas: str
     operacao: str
     documento_final: str
     messages: List[Dict[str, str]]
     context: str
+    url: str
 
 # === Prompts ===
+
 PROMPT_ANALISTA = PromptTemplate.from_template("""
 [CENÁRIO]
 {cenario}
@@ -65,6 +75,7 @@ PROMPT_ANALISTA = PromptTemplate.from_template("""
 {context}
 
 Como analista de risco, identifique as principais ameaças e vulnerabilidades.
+Pense ponto a ponto em todos os detalhos existentes no cenário para identificar o máximo de ameaças e vulnerabilidades.                                               
 """)
 
 PROMPT_ENGENHEIRO = PromptTemplate.from_template("""
@@ -74,7 +85,7 @@ PROMPT_ENGENHEIRO = PromptTemplate.from_template("""
 {analise_risco}
 [MEMÓRIA DA CONVERSA]
 {context}
-
+Pense ponto a ponto
 Como engenheiro de barreiras, proponha medidas mitigadoras físicas e tecnológicas.
 """)
 
@@ -87,24 +98,32 @@ PROMPT_COORDENADOR = PromptTemplate.from_template("""
 {medidas}
 [MEMÓRIA DA CONVERSA]
 {context}
-
+Pense ponto a ponto
 Como coordenador operacional, planeje turnos, pontos de controle, divisão das equipes, qual vestimenta e equipamentos cada equipe deve utilizar e rotinas.
+Equipe de segurança ostensiva: Uniforme e equipamentos: Uniforme tático, armamento de dotação pistola/fuzil/carabina, colete balístico e equipamento conforme orientação de sua unidade.
+Equipe de segurança Velada: Traje civil comum ao ambiente, armamento de dotação pistola com o porte velado e equipamento conforme orientação de sua unidade. 
 """)
 
 PROMPT_REVISOR = PromptTemplate.from_template("""
+Pense ponto a ponto
 Atue como um especialista em segurança de autoridades.
 Use os dados a seguir para gerar um planejamento estruturado:
 
 Cenário: {cenario}
+Análise do local: {analise_local}                                              
 Análise de risco: {analise_risco}
 Medidas: {medidas}
 Operação: {operacao}
 documentação de apoio: {documentos_de_apoio}                                              
                                               
-
-Crie um documento claro e técnico com títulos e subtítulos, seja bem detalhista.
+Dê relevancia a análise do local
+Crie um documento extenso, claro e técnico com títulos e subtítulos, seja bem detalhista.
+                                              
+Em relação a documentação de apoio, se inspire nos planejamentos existentes, percebendo os tópicos e subtopicos relevantes.
+Não economize palavaras
 """)
 PROMPT_FEEDBACK = PromptTemplate.from_template("""
+Pense ponto a ponto                                               
 Você é um engenheiro de segurança. A seguir está a análise de risco feita pelo analista:
 
 "{analise_risco}"
@@ -115,27 +134,59 @@ Responda apenas com "sim" ou "não" e uma frase explicativa.
 """)
 
 # === Nodes ===
+def analise_imagens_node(state):
+    url = str(state["url"])
+    print(f"\n\n\n\n {url}\n\n\n ")
+    message = {
+        "role": "user",
+        "content": [
+            {
+                "type": "text",
+                "text": (
+                    "Você é um especialista em segurança de dignitários altamente treinado. "
+                    "Faça uma análise da imagem recebida e identifique aspectos de segurança importantes "
+                    "para a realização de um evento nesse local: riscos, perímetros, acessos, rotas de fuga, "
+                    "pontos de vigilância e outros elementos relevantes."
+                ),
+            },
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": url,
+                },
+            },
+        ],
+    }
+
+    resposta = image_llm.invoke([message])  # dev
+    texto = resposta.content
+    print(f"\n\n ANÁLISE IMAGEM \n\n {texto} \n\n")
+    return{**state, "analise_local": texto}
+    
 def analista_node(state):
     contexto_memoria = filtrar_memoria_relevante(state["cenario"], state.get("messages", []))
     resposta = PROMPT_ANALISTA | llm | StrOutputParser()
-    analise = resposta.invoke({"cenario": state["cenario"], "context": contexto_memoria})
+    cenario = f"{state["cenario"]} {state["analise_local"]}"
+    analise = resposta.invoke({"cenario": cenario, "context": contexto_memoria})
     return {**state, "analise_risco": analise, "context": contexto_memoria}
 
 def engenheiro_node(state):
-    resposta = PROMPT_ENGENHEIRO | llm | StrOutputParser()
-    medidas = resposta.invoke({"cenario": state["cenario"], "analise_risco": state["analise_risco"], "context": state["context"]})
+    resposta = PROMPT_ENGENHEIRO | llm1 | StrOutputParser()
+    cenario = f"{state["cenario"]} {state["analise_local"]}"
+    medidas = resposta.invoke({"cenario": cenario, "analise_risco": state["analise_risco"], "context": state["context"]})
     return {**state, "medidas": medidas}
 
 def coordenador_node(state):
     resposta = PROMPT_COORDENADOR | llm2 | StrOutputParser()
-    operacao = resposta.invoke({"cenario": state["cenario"], "analise_risco": state["analise_risco"], "medidas": state["medidas"], "context": state["context"]})
+    cenario = f"{state["cenario"]} {state["analise_local"]}"
+    operacao = resposta.invoke({"cenario": cenario, "analise_risco": state["analise_risco"], "medidas": state["medidas"], "context": state["context"]})
     return {**state, "operacao": operacao}
 
 def redator_node(state):
     contexto = get_context(state["cenario"])
     
-    resposta = PROMPT_REVISOR | llm1 | StrOutputParser()
-    doc_final = resposta.invoke({"cenario": state["cenario"], "analise_risco": state["analise_risco"], "medidas": state["medidas"], "operacao": state["operacao"], "documentos_de_apoio": contexto})
+    resposta = PROMPT_REVISOR | image_llm | StrOutputParser()
+    doc_final = resposta.invoke({"cenario": state["cenario"],"analise_local":state["analise_local"], "analise_risco": state["analise_risco"], "medidas": state["medidas"], "operacao": state["operacao"], "documentos_de_apoio": contexto})
     print(f"\n\n\n DOC FINAL = {state["analise_risco"]}")
     return {**state, "documento_final": doc_final}
 
@@ -149,14 +200,18 @@ def engenheiro_feedback_node(state):
 
 # === Construindo o grafo ===
 workflow = StateGraph(PlanejamentoState)
+workflow.add_node("analise_local", analise_imagens_node)
 workflow.add_node("analise_risco", analista_node)
 workflow.add_node("engenheiro_feedback", engenheiro_feedback_node)
 workflow.add_node("medidas", engenheiro_node)
 workflow.add_node("operacao", coordenador_node)
 workflow.add_node("documento", redator_node)
-workflow.set_entry_point("analise_risco")
-workflow.add_edge("analise_risco", "engenheiro_feedback")
-workflow.add_conditional_edges("engenheiro_feedback", lambda state: "analise_risco" if state["refazer_analise"] else "medidas")
+workflow.set_entry_point("analise_local")
+#workflow.set_entry_point("analise_risco")
+workflow.add_edge("analise_local","analise_risco")
+workflow.add_edge("analise_risco", "medidas")
+
+#workflow.add_conditional_edges("engenheiro_feedback", lambda state: "analise_risco" if state["refazer_analise"] else "medidas")
 workflow.add_edge("medidas", "operacao")
 workflow.add_edge("operacao", "documento")
 workflow.add_edge("documento", END)
@@ -164,15 +219,18 @@ workflow.add_edge("documento", END)
 graph = workflow.compile(checkpointer=memory)
 
 # === Função para executar com histórico ===
-def responder(cenario: str, thread_id: str = "default", mensagens: List[Dict[str, str]] = []) -> str:
+def responder(cenario: str, url: str,thread_id: str = "default", mensagens: List[Dict[str, str]] = []) -> str:
+    print(f"\n\n\n {url} \n\n")
     state = {
         "cenario": cenario,
+        "analise_local" : "",
         "analise_risco": "",
         "medidas": "",
         "operacao": "",
         "documento_final": "",
         "messages": mensagens,
-        "context": ""
+        "context": "",
+        "url": url,
     }
     config = {"configurable": {"thread_id": thread_id}}
     result = graph.invoke(state, config=config)
