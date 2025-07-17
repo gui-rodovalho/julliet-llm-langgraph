@@ -14,6 +14,7 @@ from config import API_KEY
 from config import OPENAI_KEY
 from get_rag_context import get_relevant_documents
 from langchain_openai import ChatOpenAI
+from get_weather import get_weather
 
 
 # === Configurações iniciais ===
@@ -65,6 +66,9 @@ class PlanejamentoState(TypedDict):
     messages: List[Dict[str, str]]
     context: str
     url: str
+    lat: str
+    lon: str
+    data: str
 
 # === Prompts ===
 
@@ -75,12 +79,15 @@ PROMPT_ANALISTA = PromptTemplate.from_template("""
 {context}
 
 Como analista de risco, identifique as principais ameaças e vulnerabilidades.
+Apresente um release do clima para o dia do evento
 Pense ponto a ponto em todos os detalhos existentes no cenário para identificar o máximo de ameaças e vulnerabilidades.                                               
 """)
 
 PROMPT_ENGENHEIRO = PromptTemplate.from_template("""
 [CENÁRIO]
 {cenario}
+[ANÁLISE DO LOCAL]
+{analise_local}                                                                                                  
 [ANÁLISE DE RISCO]
 {analise_risco}
 [MEMÓRIA DA CONVERSA]
@@ -92,6 +99,8 @@ Como engenheiro de barreiras, proponha medidas mitigadoras físicas e tecnológi
 PROMPT_COORDENADOR = PromptTemplate.from_template("""
 [CENÁRIO]
 {cenario}
+[ANÁLISE DO LOCAL]
+{analise_local}  
 [ANÁLISE DE RISCO]
 {analise_risco}
 [MEDIDAS]
@@ -165,21 +174,23 @@ def analise_imagens_node(state):
     
 def analista_node(state):
     contexto_memoria = filtrar_memoria_relevante(state["cenario"], state.get("messages", []))
+    clima = get_weather(state["lat"], state["lon"], state["data"])
+    print(f"\n\n release do clima \n\n {clima} \n\n")
     resposta = PROMPT_ANALISTA | llm | StrOutputParser()
-    cenario = f"{state["cenario"]} {state["analise_local"]}"
+    cenario = f"{state["cenario"]} {state["analise_local"]} {clima}"
     analise = resposta.invoke({"cenario": cenario, "context": contexto_memoria})
     return {**state, "analise_risco": analise, "context": contexto_memoria}
 
 def engenheiro_node(state):
     resposta = PROMPT_ENGENHEIRO | llm1 | StrOutputParser()
-    cenario = f"{state["cenario"]} {state["analise_local"]}"
-    medidas = resposta.invoke({"cenario": cenario, "analise_risco": state["analise_risco"], "context": state["context"]})
+    
+    medidas = resposta.invoke({"cenario": state["cenario"], "analise_local": state["analise_local"],"analise_risco": state["analise_risco"], "context": state["context"]})
     return {**state, "medidas": medidas}
 
 def coordenador_node(state):
     resposta = PROMPT_COORDENADOR | llm2 | StrOutputParser()
-    cenario = f"{state["cenario"]} {state["analise_local"]}"
-    operacao = resposta.invoke({"cenario": cenario, "analise_risco": state["analise_risco"], "medidas": state["medidas"], "context": state["context"]})
+    
+    operacao = resposta.invoke({"cenario": state["cenario"], "analise_local": state["analise_local"],"analise_risco": state["analise_risco"], "medidas": state["medidas"], "context": state["context"]})
     return {**state, "operacao": operacao}
 
 def redator_node(state):
@@ -219,7 +230,7 @@ workflow.add_edge("documento", END)
 graph = workflow.compile(checkpointer=memory)
 
 # === Função para executar com histórico ===
-def responder(cenario: str, url: str,thread_id: str = "default", mensagens: List[Dict[str, str]] = []) -> str:
+def responder(cenario: str, url: str,lat: str, lon: str, data:str,thread_id: str = "default", mensagens: List[Dict[str, str]] = []) -> str:
     print(f"\n\n\n {url} \n\n")
     state = {
         "cenario": cenario,
@@ -231,6 +242,9 @@ def responder(cenario: str, url: str,thread_id: str = "default", mensagens: List
         "messages": mensagens,
         "context": "",
         "url": url,
+        "lat": lat,
+        "lon": lon,
+        "data": data,
     }
     config = {"configurable": {"thread_id": thread_id}}
     result = graph.invoke(state, config=config)
