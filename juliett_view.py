@@ -1,12 +1,10 @@
-# view vinculada ao core_agents.py
-# sistema de multi agentes de IA
+#View integrada ao core.py 
+#cria um chatboot 
 
 import streamlit as st
 from save_vector_store import add_to_faiss
-from core_agents import responder
+from core import responder
 import base64
-import io
-from PIL import Image
 import html
 import os
 import time
@@ -86,8 +84,6 @@ if 'user_input' not in st.session_state:
 
 #resposta_placeholder.container(height=300, border= False)
 input = st.text_area(label="Faça uma pergunta:")
-uploaded_file = st.file_uploader("Envie uma imagem para análise", type=["jpg", "jpeg", "png"])
-#url = st.text_input(label= "Insira a url da imagem:")
 
 
 # Botão para enviar a pergunta
@@ -98,28 +94,9 @@ if "mensagens" not in st.session_state:
     st.session_state["mensagens"] = []
 if st.button("Enviar"):
     
-    if uploaded_file and input:
-        image = Image.open(uploaded_file)
-
-    # Redimensionar se maior que 1024px
-        max_dim = max(image.size)
-        if max_dim > 1024:
-            resize_ratio = 1024 / max_dim
-            new_size = (int(image.width * resize_ratio), int(image.height * resize_ratio))
-            image = image.resize(new_size, Image.Resampling.LANCZOS)
-            st.info(f"🔄 Imagem redimensionada para {new_size[0]}x{new_size[1]} para compatibilidade com a API.")
-        else:
-            st.success(f"✅ Tamanho da imagem: {image.size[0]}x{image.size[1]} (sem redimensionamento).")
-
-        # Mostrar imagem na interface
-        #st.image(image, caption="Imagem enviada", use_column_width=True)
-
-        # Codificar imagem em base64
-        buffered = io.BytesIO()
-        image.save(buffered, format="JPEG", quality=85)
-        img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+    if input:
         query = html.escape(input)
-        response = responder(query, img_base64, st.session_state["session_id"], mensagens= st.session_state["messages"])
+        response = responder(query, st.session_state["session_id"])
         
         st.session_state.user_input =""
         st.session_state["mensagens"].append({"role": "user", "content": input})

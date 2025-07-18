@@ -25,6 +25,8 @@ from langchain_community.vectorstores import FAISS
 from langchain.docstore.document import Document
 from langchain_core.output_parsers import StrOutputParser
 from langgraph.checkpoint.memory import MemorySaver
+from langchain_openai import ChatOpenAI
+from config import OPENAI_KEY
 from mcp_rag import get_mcp_context
 import os
 
@@ -32,7 +34,11 @@ import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 memory = MemorySaver()
-llm: BaseChatModel = ChatGroq(api_key= API_KEY, model= "qwen/qwen3-32b")
+#llm: BaseChatModel = ChatGroq(api_key= API_KEY, model= "qwen/qwen3-32b")
+llm: BaseChatModel = ChatOpenAI(
+    model = "gpt-4o",
+    api_key = OPENAI_KEY
+)
 embedder = HuggingFaceEmbeddings(model_name="paraphrase-multilingual-mpnet-base-v2")
 
 def get_context(query: str) -> str:
@@ -87,7 +93,7 @@ def construir_grafo():
 
     def gerar_node(state: GraphState) -> GraphState:
         prompt = PromptTemplate.from_template(
-            "Seu nome é Julliet, você é uma assistente virtual. Responda sempre em português. Use as informações a seguir para responder com clareza. Se nas informações não existir nada que auxilie na resposta, peça mais informações ao usuário sempre mantendo uma conversa fluida e sem mencionar a palavra contexto\n\n{context}\n\nPergunta:\n{question}\n\nResposta:"
+            "Seu nome é Juliett, você é uma assistente virtual, sua especialidade é segurança de digntários. Responda sempre em português. Use as informações a seguir para responder com clareza. Se nas informações não existir nada que auxilie na resposta, peça mais informações ao usuário sempre mantendo uma conversa fluida e sem mencionar a palavra contexto\n\n{context}\n\nPergunta:\n{question}\n\nResposta:"
         )
         parser = StrOutputParser()
         chain = prompt | llm | parser

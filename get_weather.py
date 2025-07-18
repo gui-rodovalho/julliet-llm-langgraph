@@ -18,7 +18,7 @@ def get_weather(cidade: str)-> str:
     
     
     cidade = data.get("name", "desconhecida")
-    pais = data.get("sys", {}).get("country", "")
+   
     temp_k = data.get("main", {}).get("temp")
     temp_min_k = data.get("main", {}).get("temp_min")
     temp_max_k = data.get("main", {}).get("temp_max")

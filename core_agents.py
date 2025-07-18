@@ -162,7 +162,7 @@ def analise_imagens_node(state):
             {
                 "type": "image_url",
                 "image_url": {
-                    "url": url,
+                    "url": f"data:image/jpeg;base64,{url}",
                 },
             },
         ],
@@ -259,4 +259,5 @@ def responder(cenario: str, url: str,thread_id: str = "default", mensagens: List
     config = {"configurable": {"thread_id": thread_id}}
     result = graph.invoke(state, config=config)
     imprimir = f"{result['documento_final']} \n Release do CLima: \n {state['clima']}"
+    print(imprimir)
     return result["documento_final"]
