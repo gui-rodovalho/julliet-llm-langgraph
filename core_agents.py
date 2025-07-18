@@ -15,6 +15,7 @@ from config import OPENAI_KEY
 from get_rag_context import get_relevant_documents
 from langchain_openai import ChatOpenAI
 from get_weather import get_weather
+import re, json
 
 
 # === Configurações iniciais ===
@@ -66,9 +67,8 @@ class PlanejamentoState(TypedDict):
     messages: List[Dict[str, str]]
     context: str
     url: str
-    lat: str
-    lon: str
-    data: str
+    clima: str
+    
 
 # === Prompts ===
 
@@ -146,6 +146,7 @@ Responda apenas com "sim" ou "não" e uma frase explicativa.
 def analise_imagens_node(state):
     url = str(state["url"])
     print(f"\n\n\n\n {url}\n\n\n ")
+    cenario = state["cenario"]
     message = {
         "role": "user",
         "content": [
@@ -153,9 +154,9 @@ def analise_imagens_node(state):
                 "type": "text",
                 "text": (
                     "Você é um especialista em segurança de dignitários altamente treinado. "
-                    "Faça uma análise da imagem recebida e identifique aspectos de segurança importantes "
-                    "para a realização de um evento nesse local: riscos, perímetros, acessos, rotas de fuga, "
-                    "pontos de vigilância e outros elementos relevantes."
+                    "1. Faça uma análise da imagem recebida e identifique riscos, perímetros, acessos, rotas de fuga, pontos de vigilância e outros elementos relevantes.\n"
+                    "2. Em seguida, com base na frase fornecida pelo usuário, extraia o nome da cidade e a data do evento no formato JSON com os campos 'cidade' e 'data'.\n"
+                    f"Frase do usuário: {cenario}"
                 ),
             },
             {
@@ -170,14 +171,24 @@ def analise_imagens_node(state):
     resposta = image_llm.invoke([message])  # dev
     texto = resposta.content
     print(f"\n\n ANÁLISE IMAGEM \n\n {texto} \n\n")
-    return{**state, "analise_local": texto}
+    try:
+        match = re.search(r'\{.*"cidade".*?\}', texto, re.DOTALL)
+        local_info = json.loads(match.group()) if match else {}
+    except Exception as e:
+        print("❌ Erro ao extrair JSON de cidade/data:", e)
+        local_info = {}
+    clima = get_weather(local_info.get("cidade"))
+    
+    print(f"\n\n release do clima \n\n {clima} \n\n")
+    resposta = f"{texto} segue o release do clima para ser analisado {clima}"
+    return{**state, "analise_local": resposta, "clima": clima}
     
 def analista_node(state):
     contexto_memoria = filtrar_memoria_relevante(state["cenario"], state.get("messages", []))
-    clima = get_weather(state["lat"], state["lon"], state["data"])
-    print(f"\n\n release do clima \n\n {clima} \n\n")
+    #clima = get_weather(state["lat"], state["lon"], state["data"])
+    
     resposta = PROMPT_ANALISTA | llm | StrOutputParser()
-    cenario = f"{state["cenario"]} {state["analise_local"]} {clima}"
+    cenario = f"{state['cenario']} {state['analise_local']}"
     analise = resposta.invoke({"cenario": cenario, "context": contexto_memoria})
     return {**state, "analise_risco": analise, "context": contexto_memoria}
 
@@ -197,8 +208,8 @@ def redator_node(state):
     contexto = get_context(state["cenario"])
     
     resposta = PROMPT_REVISOR | image_llm | StrOutputParser()
-    doc_final = resposta.invoke({"cenario": state["cenario"],"analise_local":state["analise_local"], "analise_risco": state["analise_risco"], "medidas": state["medidas"], "operacao": state["operacao"], "documentos_de_apoio": contexto})
-    print(f"\n\n\n DOC FINAL = {state["analise_risco"]}")
+    doc_final = resposta.invoke({"cenario": state["cenario"],"analise_local":state["analise_local"], "analise_risco": state["analise_risco"], "medidas": state["medidas"], "operacao": state["operacao"],"documentos_de_apoio": contexto})
+    print(f"\n\n\n DOC FINAL = {state['analise_risco']}")
     return {**state, "documento_final": doc_final}
 
 def engenheiro_feedback_node(state):
@@ -230,7 +241,7 @@ workflow.add_edge("documento", END)
 graph = workflow.compile(checkpointer=memory)
 
 # === Função para executar com histórico ===
-def responder(cenario: str, url: str,lat: str, lon: str, data:str,thread_id: str = "default", mensagens: List[Dict[str, str]] = []) -> str:
+def responder(cenario: str, url: str,thread_id: str = "default", mensagens: List[Dict[str, str]] = []) -> str:
     print(f"\n\n\n {url} \n\n")
     state = {
         "cenario": cenario,
@@ -242,10 +253,10 @@ def responder(cenario: str, url: str,lat: str, lon: str, data:str,thread_id: str
         "messages": mensagens,
         "context": "",
         "url": url,
-        "lat": lat,
-        "lon": lon,
-        "data": data,
+        "clima": ""
+        
     }
     config = {"configurable": {"thread_id": thread_id}}
     result = graph.invoke(state, config=config)
+    imprimir = f"{result['documento_final']} \n Release do CLima: \n {state['clima']}"
     return result["documento_final"]

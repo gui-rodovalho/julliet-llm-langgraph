@@ -82,9 +82,7 @@ if 'user_input' not in st.session_state:
 #resposta_placeholder.container(height=300, border= False)
 input = st.text_area(label="Faça uma pergunta:")
 url = st.text_input(label= "Insira a url da imagem:")
-lat = st.text_input(label= "Insira a latitude:")
-lon = st.text_input(label= "Insira a longitude:")
-data = st.text_input(label= "Insira a data:")
+
 
 # Botão para enviar a pergunta
 if "generated_response" not in st.session_state:
@@ -96,7 +94,7 @@ if st.button("Enviar"):
     
     if input:
         query = html.escape(input)
-        response = responder(query, url,lat, lon, data, st.session_state["session_id"], mensagens= st.session_state["messages"])
+        response = responder(query, url, st.session_state["session_id"], mensagens= st.session_state["messages"])
         
         st.session_state.user_input =""
         st.session_state["mensagens"].append({"role": "user", "content": input})

@@ -1,13 +1,14 @@
 from config import OPEN_WEATHER_KEY
 import requests
 
-def get_weather(lat: str, lon: str, data: str)-> str: 
+def get_weather(cidade: str)-> str: 
+    #cidade = "Campo Grande"
 
-    url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={OPEN_WEATHER_KEY}"
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={cidade}&appid={OPEN_WEATHER_KEY}"
 
     
 
-    response = requests.get(url)
+    response = requests.get(url, timeout=5)
 
     if response.status_code == 200:
         data = response.json()
@@ -53,3 +54,16 @@ def get_weather(lat: str, lon: str, data: str)-> str:
     return resumo
 
 #get_weather("-20.55855749608114", "-54.57646163676827", "1234")
+"""
+def get_loc(cidade: str):
+    print("iniciando")
+    resultado = requests.get(f"https://api.openweathermap.org/data/2.5/weather?q={cidade}&appid={OPEN_WEATHER_KEY}")
+    if resultado.status_code == 200:
+        data = resultado.json()
+        print(data)
+    else:
+        print(f"Erro: {resultado.status_code} - {resultado.text}")
+
+
+get_loc("campo grande")
+"""
