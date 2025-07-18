@@ -20,22 +20,6 @@ Os dados são fornecidos por meio de arquivos no formato .pdf.
 ### Utilizando LLM em nuvem:
 - Mínimo 8gb de memória RAM.
 
-## Instalação
-
-### Pré-Requisitos
-- Ter o Docker instalado na sua máquina.
-### Passos para a instalação
-
-#### 1. Obter o Dockerfile + arquivos de configuração:
-Obter a pasta compactada contendo dockerfile e outros arquivos necessários para a instalação.
-
-#### 2. Construa a imagem Docker
-
-Abra o terminal dentro da pasta do projeto e execute o seguinte comando para construir a imagem Docker:
-`docker build -t juliett .`
-
-### 3. Rodar a imgem criada
-Utilize o comando `docker run -p 8501:8501 juliett`
 
 ## Limitações
 - Atualmente a Juliett fz o RAG apenas a partir de documentos no formato .pdf;
