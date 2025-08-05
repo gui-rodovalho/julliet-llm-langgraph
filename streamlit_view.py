@@ -112,39 +112,55 @@ if "mensagens" not in st.session_state:
     st.session_state["mensagens"] = []
 if st.button("Enviar"):
     
-    if uploaded_file and input:
-        image = Image.open(uploaded_file)
+    if input:
+        if uploaded_file:
+            image = Image.open(uploaded_file)
 
-    # Redimensionar se maior que 1024px
-        max_dim = max(image.size)
-        if max_dim > 1024:
-            resize_ratio = 1024 / max_dim
-            new_size = (int(image.width * resize_ratio), int(image.height * resize_ratio))
-            image = image.resize(new_size, Image.Resampling.LANCZOS)
-            st.info(f"🔄 Imagem redimensionada para {new_size[0]}x{new_size[1]} para compatibilidade com a API.")
-        else:
-            st.success(f"✅ Tamanho da imagem: {image.size[0]}x{image.size[1]} (sem redimensionamento).")
+        # Redimensionar se maior que 1024px
+            max_dim = max(image.size)
+            if max_dim > 1024:
+                resize_ratio = 1024 / max_dim
+                new_size = (int(image.width * resize_ratio), int(image.height * resize_ratio))
+                image = image.resize(new_size, Image.Resampling.LANCZOS)
+                st.info(f"🔄 Imagem redimensionada para {new_size[0]}x{new_size[1]} para compatibilidade com a API.")
+            else:
+                st.success(f"✅ Tamanho da imagem: {image.size[0]}x{image.size[1]} (sem redimensionamento).")
 
-        # Mostrar imagem na interface
-        #st.image(image, caption="Imagem enviada", use_column_width=True)
+            # Mostrar imagem na interface
+            #st.image(image, caption="Imagem enviada", use_column_width=True)
 
-        # Codificar imagem em base64
-        buffered = io.BytesIO()
-        image.save(buffered, format="JPEG", quality=85)
-        img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
-        query = html.escape(input)
-        response = responder(query, img_base64, st.session_state["session_id"], mensagens= st.session_state["messages"])
+            # Codificar imagem em base64
+            buffered = io.BytesIO()
+            image.save(buffered, format="JPEG", quality=85)
+            img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+            query = html.escape(input)
+            response = responder(query, img_base64, st.session_state["session_id"], mensagens= st.session_state["messages"])
+            
+            st.session_state.user_input =""
+            st.session_state["mensagens"].append({"role": "user", "content": input})
+            st.session_state["mensagens"].append({"role": "assistant", "content": response}) 
         
-        st.session_state.user_input =""
-        st.session_state["mensagens"].append({"role": "user", "content": input})
-        st.session_state["mensagens"].append({"role": "assistant", "content": response}) 
-      
-        resposta = response
-        st.session_state.generated_response = response
-  
-        if st.session_state.generated_response:
-            st.write("Resposta: ")
-            st.write_stream(split(st.session_state.generated_response))
+            resposta = response
+            st.session_state.generated_response = response
+    
+            if st.session_state.generated_response:
+                st.write("Resposta: ")
+                st.write_stream(split(st.session_state.generated_response))
+        else:
+            query = html.escape(input)
+            img_base64 = "N"
+            response = responder(query, img_base64, st.session_state["session_id"], mensagens= st.session_state["messages"])
+            
+            st.session_state.user_input =""
+            st.session_state["mensagens"].append({"role": "user", "content": input})
+            st.session_state["mensagens"].append({"role": "assistant", "content": response}) 
+
+            resposta = response
+            st.session_state.generated_response = response
+
+            if st.session_state.generated_response:
+                st.write("Resposta: ")
+                st.write_stream(split(st.session_state.generated_response))
 
     else:
             st.warning("Por favor, insira uma pergunta.")

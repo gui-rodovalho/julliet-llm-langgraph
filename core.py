@@ -83,7 +83,7 @@ def construir_grafo():
     def recuperar_node(state: GraphState) -> GraphState:
         pergunta = state["input"]
 
-        memoria_conversacional = filtrar_memoria_relevante(pergunta, state.get("messages", []), k=2)
+        memoria_conversacional = filtrar_memoria_relevante(pergunta, state.get("messages", []), k=3)
 
         contexto_docs = get_context(pergunta)
         contexto_geral = f"[MEMÓRIA DE CONVERSA]\n{memoria_conversacional}\n\n[BASE DE CONHECIMENTO]\n{contexto_docs}"

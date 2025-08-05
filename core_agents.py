@@ -88,73 +88,145 @@ class PlanejamentoState(TypedDict):
 # === Prompts ===
 
 PROMPT_ANALISTA = PromptTemplate.from_template("""
+
 [CENÁRIO]
 {cenario}
+
 [MEMÓRIA DA CONVERSA]
 {context}
 
-Como analista de risco, identifique as principais ameaças e vulnerabilidades.
-Apresente um release do clima para o dia do evento
-Pense ponto a ponto em todos os detalhos existentes no cenário para identificar o máximo de ameaças e vulnerabilidades.                                               
+Atue como um analista de risco especializado em segurança de autoridades.
+
+1. Identifique, de forma técnica e detalhada, as **principais ameaças e vulnerabilidades** presentes no cenário.
+2. Analise ponto a ponto todos os elementos do contexto, buscando **extrair o máximo de riscos potenciais** e seus fatores agravantes.
+3. Apresente também um **boletim climático para o dia do evento**, incluindo previsões relevantes que possam impactar as operações.
+
+Utilize linguagem clara, objetiva e profissional. Seja minucioso em sua análise.
 """)
 
+
 PROMPT_ENGENHEIRO = PromptTemplate.from_template("""
-[CENÁRIO]
+CENÁRIO]
 {cenario}
+
 [ANÁLISE DO LOCAL]
-{analise_local}                                                                                                  
+{analise_local}
+
 [ANÁLISE DE RISCO]
 {analise_risco}
+
 [MEMÓRIA DA CONVERSA]
 {context}
-Pense ponto a ponto
-Como engenheiro de barreiras, proponha medidas mitigadoras físicas e tecnológicas.
+
+Atue como um engenheiro de barreiras com expertise em segurança institucional.
+
+1. Proponha **medidas mitigadoras físicas e tecnológicas** com base nas vulnerabilidades identificadas.
+2. Justifique tecnicamente **a importância de cada barreira** proposta.
+3. Sempre que possível, ofereça **alternativas tecnológicas** com prós e contras para subsidiar decisões estratégicas.
+
+Pense ponto a ponto. Estruture sua resposta com clareza, incluindo justificativas técnicas e operacionais.
 """)
 
 PROMPT_COORDENADOR = PromptTemplate.from_template("""
 [CENÁRIO]
 {cenario}
+
 [ANÁLISE DO LOCAL]
-{analise_local}  
+{analise_local}
+
 [ANÁLISE DE RISCO]
 {analise_risco}
+
 [MEDIDAS]
 {medidas}
+
 [MEMÓRIA DA CONVERSA]
 {context}
-Pense ponto a ponto
-Como coordenador operacional, planeje turnos, pontos de controle, divisão das equipes, qual vestimenta e equipamentos cada equipe deve utilizar e rotinas.
-Equipe de segurança ostensiva: Uniforme e equipamentos: Uniforme tático, armamento de dotação pistola/fuzil/carabina, colete balístico e equipamento conforme orientação de sua unidade.
-Equipe de segurança Velada: Traje civil comum ao ambiente, armamento de dotação pistola com o porte velado e equipamento conforme orientação de sua unidade. 
+
+Atue como um **coordenador operacional** responsável por organizar e distribuir as equipes de segurança.
+
+Pense ponto a ponto. Elabore um planejamento que contenha:
+
+1. **Divisão dos turnos de serviço**, considerando as seguintes escalas possíveis:
+   - 12h por 36h
+   - 12h por 60h
+   - 24h por 96h
+   - 8h por dia com até 2h extras
+
+2. **Distribuição das equipes**, especificando:
+   - Quantitativo real de profissionais disponíveis;
+   - Função de cada membro;
+   - Alocação por área, função ou turno.
+
+3. **Estrutura ideal da equipe**, conforme padrões recomendados:
+   - Quantitativo ideal por função;
+   - Justificativas para a composição ideal;
+   - Comparações entre o cenário atual e o ideal, com análise de lacunas, riscos e pontos de atenção.
+
+4. **Quadros comparativos ou tabelas** para facilitar a visualização entre realidade e ideal.
+
+5. **Padronização de vestimentas e equipamentos**:
+   - **Equipe Ostensiva**: Uniforme tático, armamento de dotação (pistola/fuzil/carabina), colete balístico e demais equipamentos conforme orientação da unidade.
+   - **Equipe Velada**: Traje civil adequado ao ambiente, porte velado com pistola e equipamentos compatíveis com a missão.
+
+Seja técnico, organizado e detalhado. O documento final deve refletir um planejamento completo e embasado.
 """)
 
 PROMPT_REVISOR = PromptTemplate.from_template("""
-Pense ponto a ponto
-Atue como um especialista em segurança de autoridades.
-Use os dados a seguir para gerar um planejamento estruturado:
+Pense ponto a ponto.
+Atue como um **especialista em segurança de autoridades**, com experiência em planejamento de operações de alto risco.
 
-Cenário: {cenario}
-Análise do local: {analise_local}                                              
-Análise de risco: {analise_risco}
-Medidas: {medidas}
-Operação: {operacao}
-documentação de apoio: {documentos_de_apoio}                                              
-                                              
-Dê relevancia a análise do local
-Crie um documento extenso, claro e técnico com títulos e subtítulos, seja bem detalhista.
-                                              
-Em relação a documentação de apoio, se inspire nos planejamentos existentes, percebendo os tópicos e subtopicos relevantes.
-Não economize palavaras
+Utilize os dados abaixo para redigir um **planejamento estruturado, técnico e extenso**, com uso de **títulos e subtítulos**.
+
+[CENÁRIO]
+{cenario}
+
+[ANÁLISE DO LOCAL]
+{analise_local}
+
+[ANÁLISE DE RISCO]
+{analise_risco}
+
+[MEDIDAS]
+{medidas}
+
+[OPERAÇÃO]
+{operacao}
+
+[DOCUMENTAÇÃO DE APOIO]
+{documentos_de_apoio}
+
+Dê ênfase à análise do local e siga as diretrizes operacionais propostas pelo coordenador.
+
+Utilize quadros comparativos ou tabelas sempre que for útil para a clareza.
+
+Em relação à documentação de apoio:
+- Inspire-se em planejamentos anteriores;
+- Identifique os tópicos e subtópicos mais relevantes;
+- Mantenha linguagem técnica e consistente;
+
+Não economize palavras — o nível de detalhamento é essencial.
+
+A entrega deve ser clara, completa e com forte embasamento técnico-operacional.
 """)
 PROMPT_FEEDBACK = PromptTemplate.from_template("""
 Pense ponto a ponto                                               
-Você é um engenheiro de segurança. A seguir está a análise de risco feita pelo analista:
+Você é um revisor técnico especializado em segurança de autoridades.
+Abaixo está o planejamento de segurança gerado:                                           
 
-"{analise_risco}"
+[DOCUMENTO]
+{messages}
+                                                                        
+[REQUISIÇÃO DE REVISÃO]
+{cenario} 
+Com base nessa requisição, aponte ponto a ponto:
+- O que precisa ser ajustado no documento;
+- Por quê (justificativas técnicas);
+- Quais seções devem ser revisadas ou reescritas;
+- Se possível, sugestão do texto revisado ou orientação clara.
 
-Ela é suficiente para que você proponha medidas técnicas e operacionais?
-
-Responda apenas com "sim" ou "não" e uma frase explicativa.
+Se a requisição estiver incorreta ou irrelevante, explique o motivo.
+Não economize palavras.
 """)
 
 # === Nodes ===
@@ -162,7 +234,8 @@ def analise_imagens_node(state):
     url = str(state["url"])
     print(f"\n\n\n\n {url}\n\n\n ")
     cenario = state["cenario"]
-    message = {
+    if url == "N":
+        message = {
         "role": "user",
         "content": [
             {
@@ -174,27 +247,50 @@ def analise_imagens_node(state):
                     f"Frase do usuário: {cenario}"
                 ),
             },
-            {
-                "type": "image_url",
-                "image_url": {
-                    "url": f"data:image/jpeg;base64,{url}",
-                },
-            },
         ],
     }
+    else:
+        message = {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": (
+                        "Você é um especialista em segurança de dignitários altamente treinado. "
+                        "1. Faça uma análise da imagem recebida e identifique riscos, perímetros, acessos, rotas de fuga, pontos de vigilância e outros elementos relevantes.\n"
+                        "2. Em seguida, com base na frase fornecida pelo usuário, extraia o nome da cidade e a data do evento no formato JSON com os campos 'cidade' e 'data'.\n"
+                        f"Frase do usuário: {cenario}"
+                    ),
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{url}",
+                    },
+                },
+            ],
+        }
 
     resposta = image_llm.invoke([message])  # dev
     texto = resposta.content
     print(f"\n\n ANÁLISE IMAGEM \n\n {texto} \n\n")
-    try:
-        match = re.search(r'\{.*"cidade".*?\}', texto, re.DOTALL)
-        local_info = json.loads(match.group()) if match else {}
-    except Exception as e:
-        print("❌ Erro ao extrair JSON de cidade/data:", e)
-        local_info = {}
-    clima = get_weather(local_info.get("cidade"))
-    
-    print(f"\n\n release do clima \n\n {clima} \n\n")
+    palavras_chave_revisao = [
+        "revise", "revisar", "corrija", "corrigir", "ajuste", "ajustar",
+        "modifique", "modificar", "melhore", "reescreva", "melhorar"
+    ]
+    if any(p in cenario for p in palavras_chave_revisao):
+        print("revisao")
+        clima = "sem informaçoes sobre o clima"
+    else:
+        try:
+            match = re.search(r'\{.*"cidade".*?\}', texto, re.DOTALL)
+            local_info = json.loads(match.group()) if match else {}
+        except Exception as e:
+            print("❌ Erro ao extrair JSON de cidade/data:", e)
+            local_info = {}
+        clima = get_weather(local_info.get("cidade"))
+        
+        print(f"\n\n release do clima \n\n {clima} \n\n")
     resposta = f"{texto} segue o release do clima para ser analisado {clima}"
     return{**state, "analise_local": resposta, "clima": clima}
     
@@ -229,11 +325,35 @@ def redator_node(state):
 
 def engenheiro_feedback_node(state):
     resposta = PROMPT_FEEDBACK | llm | StrOutputParser()
-    avaliacao = resposta.invoke({"analise_risco": state["analise_risco"]})
-    if "não" in avaliacao.lower():
-        return {**state, "refazer_analise": True}
-    else:
-        return {**state, "refazer_analise": False}
+    avaliacao = resposta.invoke({"messages": state["messages"], "cenario": state["cenario"]})
+    
+    return {**state, "documento_final": avaliacao}
+
+def condicional_revisao_final(state) -> str:
+    query = state.get("cenario", "").lower()
+    palavras_chave_revisao = [
+        "revise", "revisar", "corrija", "corrigir", "ajuste", "ajustar",
+        "modifique", "modificar", "melhore", "reescreva", "melhorar"
+    ]
+    if any(p in query for p in palavras_chave_revisao):
+        return "engenheiro_feedback"
+    return "__end__"
+
+
+def documento_revisado_node(state):
+    contexto = get_context(state["cenario"])
+    resposta = PROMPT_REVISOR | image_llm | StrOutputParser()
+    doc_final = resposta.invoke({
+        "cenario": state["cenario"],
+        "analise_local": state["analise_local"],
+        "analise_risco": state["analise_risco"],
+        "medidas": state["medidas"],
+        "operacao": state["operacao"],
+        "documentos_de_apoio": contexto
+    })
+    return {**state, "documento_final": doc_final}
+
+
 
 # === Construindo o grafo ===
 workflow = StateGraph(PlanejamentoState)
@@ -243,15 +363,24 @@ workflow.add_node("engenheiro_feedback", engenheiro_feedback_node)
 workflow.add_node("medidas", engenheiro_node)
 workflow.add_node("operacao", coordenador_node)
 workflow.add_node("documento", redator_node)
+workflow.add_node("documento_revisado", documento_revisado_node)
 workflow.set_entry_point("analise_local")
-#workflow.set_entry_point("analise_risco")
 workflow.add_edge("analise_local","analise_risco")
 workflow.add_edge("analise_risco", "medidas")
-
-#workflow.add_conditional_edges("engenheiro_feedback", lambda state: "analise_risco" if state["refazer_analise"] else "medidas")
 workflow.add_edge("medidas", "operacao")
 workflow.add_edge("operacao", "documento")
-workflow.add_edge("documento", END)
+workflow.add_conditional_edges(
+    "documento",
+    condicional_revisao_final,
+    {
+        "engenheiro_feedback": "engenheiro_feedback",
+        "__end__": END
+    }
+)
+
+# Fluxo após revisão:
+workflow.add_edge("engenheiro_feedback", "documento_revisado")
+workflow.add_edge("documento_revisado", END)
 
 graph = workflow.compile(checkpointer=memory)
 
