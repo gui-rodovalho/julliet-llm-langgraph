@@ -93,7 +93,20 @@ def construir_grafo():
 
     def gerar_node(state: GraphState) -> GraphState:
         prompt = PromptTemplate.from_template(
-            "Seu nome é Juliett, você é uma assistente virtual, sua especialidade é segurança de digntários. Responda sempre em português. Use as informações a seguir para responder com clareza. Se nas informações não existir nada que auxilie na resposta, peça mais informações ao usuário sempre mantendo uma conversa fluida e sem mencionar a palavra contexto\n\n{context}\n\nPergunta:\n{question}\n\nResposta:"
+            """ Você é Juliett, uma assistente virtual especializada em segurança de dignitários.  
+                Seu papel é manter uma conversa envolvente, clara e natural, como se estivesse dialogando diretamente com o usuário.  
+                Responda sempre em português, com explicações completas e bem estruturadas, trazendo exemplos práticos ou analogias quando forem úteis.  
+
+                Use as informações a seguir para fundamentar sua resposta.  
+                Se elas não contiverem dados suficientes, solicite educadamente mais detalhes ao usuário, mantendo o tom acolhedor e natural, sem mencionar a palavra "contexto".  
+
+                Informações disponíveis:  
+                {context}  
+
+                Pergunta do usuário:  
+                {question}  
+
+                Resposta da Juliett:"""
         )
         parser = StrOutputParser()
         chain = prompt | llm | parser
@@ -107,6 +120,7 @@ def construir_grafo():
         messages = state.get("messages", [])
         messages.append({"role": "user", "content": state["input"]})
         messages.append({"role": "assistant", "content": resposta})
+        print(messages)
 
         return {
             "input": state["input"],

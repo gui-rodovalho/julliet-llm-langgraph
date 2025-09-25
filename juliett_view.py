@@ -19,12 +19,14 @@
 import streamlit as st
 from save_vector_store import add_to_faiss
 from core import responder
+
 import base64
 import html
 import os
 import time
 import re
 from session_id import get_next_session_id
+from core_agents_novo import responderAgentes
 
 def get_base64_image(image_path):
     with open(image_path, "rb") as img_file:
@@ -53,7 +55,27 @@ if len(st.session_state) == 0:
 
 st.markdown(html_content, unsafe_allow_html=True)
 
-
+def display_messages():
+   # st.subheader("Histórico:", divider= True)
+    if "mensagens" not in st.session_state or not st.session_state["mensagens"]:
+        st.info("Nenhuma mensagem no histórico ainda.")
+        return
+    
+    for i, msg in enumerate(st.session_state["mensagens"]):
+        role = msg.get("role", "")
+        content = msg.get("content", "")
+        
+        if role == "user":
+            st.subheader("Usuário:")
+            st.write(content)
+        elif role == "Juliett":
+            st.subheader("Juliett:")
+            st.write(content)
+        else:
+            # fallback, caso apareça algo inesperado
+           # st.subheader("Outro:")
+            #st.write(content)
+            print("")
 
 def split(response):
     if isinstance(response, tuple):
@@ -84,6 +106,12 @@ def split(response):
             yield char
             time.sleep(0.01)
 
+def limpar_resposta(resp):
+    if isinstance(resp, tuple) and len(resp) > 0:
+        return resp[0]  # só a resposta
+    return resp
+
+
 
 
 
@@ -111,11 +139,19 @@ if st.button("Enviar"):
     
     if input:
         query = html.escape(input)
-        response = responder(query, st.session_state["session_id"])
+
+        if "plano" in input.lower():
+            print("reconheceu PLANO no input")
+            response = responderAgentes(query, st.session_state["session_id"], mensagens= st.session_state["mensagens"])
+
+        else:
+            response = responder(query, st.session_state["session_id"])
         
         st.session_state.user_input =""
         st.session_state["mensagens"].append({"role": "user", "content": input})
         st.session_state["mensagens"].append({"role": "assistant", "content": response}) 
+        st.session_state["mensagens"].append({"role": "Juliett", "content": limpar_resposta(response)}
+)
       
         resposta = response
         st.session_state.generated_response = response
@@ -128,13 +164,13 @@ if st.button("Enviar"):
             st.warning("Por favor, insira uma pergunta.")
             
 st.markdown("<p style='padding-top:10px'> </p>", unsafe_allow_html=True)
+     
 
 with st.expander("CLIQUE AQUI PARA VER O HISTÓRICO DA CONVERSA"):
-   # display_messages()
-   print("olá")
+    
+    display_messages()
 
 st.markdown("<p style='padding-top:10px'> </p>", unsafe_allow_html=True)
-
 
 with st.expander("CLIQUE AQUI PARA TRABALHAR COM ARQUIVOS LOCAIS"):
     file = []
