@@ -139,8 +139,9 @@ if st.button("Enviar"):
     
     if input:
         query = html.escape(input)
-
-        if "plano" in input.lower():
+        palavras_chave = ["planeje", "plano", "planejamento"]
+        if any(p in input.lower() for p in palavras_chave):
+        
             print("reconheceu PLANO no input")
             response = responderAgentes(query, st.session_state["session_id"], mensagens= st.session_state["mensagens"])
 
